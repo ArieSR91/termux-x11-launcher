@@ -1,0 +1,45 @@
+#!/bin/bash
+
+function start_x11()
+{
+kill -9 $(pgrep -f "termux.x11") 2>/dev/null
+export XDG_RUNTIME_DIR=${TMPDIR}
+pulseaudio --start --load="module-native-protocol-tcp auth-ip-acl=127.0.0.1 auth-anonymous=1" --exit-idle-time=-1
+termux-x11 :1 > /dev/null &
+am start --user 0 -n com.termux.x11/com.termux.x11.MainActivity > /dev/null 2>&1
+proot-distro login "$@" --shared-tmp -- runuser -l RamaVL -c 'DISPLAY=:1 startxfce4'
+stop_x11
+am broadcast -a com.termux.x11.ACTION_STOP -p com.termux.x11
+return 1
+}
+
+function stop_x11()
+{
+kill -9 $(pgrep -f "termux.x11") 2>/dev/null
+pkill -f "termux.x11"
+}
+
+function start_wine()
+{
+kill -9 $(pgrep -f "termux.x11") 2>/dev/null
+export XDG_RUNTIME_DIR=${TMPDIR}
+pulseaudio --start --load="module-native-protocol-tcp auth-ip-acl=127.0.0.1 auth-anonymous=1" --exit-idle-time=-1
+termux-x11 :1 > /dev/null &
+am start --user 0 -n com.termux.x11/com.termux.x11.MainActivity > /dev/null 2>&1
+proot-distro login "$@" --shared-tmp -- runuser -l RamaVL -c 'env DISPLAY=:1 wine explorer /desktop=shell,1280x720'
+stop_x11
+am broadcast -a com.termux.x11.ACTION_STOP -p com.termux.x11
+return 1
+}
+
+case $1 in
+    start)
+        start_x11
+        ;;
+    stop)
+        stop_x11
+        ;;
+    wine)
+        start_wine
+        ;;
+esac
